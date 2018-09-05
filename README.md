@@ -1,4 +1,4 @@
-[공통] 디자인 패턴 
+디자인 패턴 (Visitor Patten) 
 ======================
 
 # Visitor Patten(방문 패턴) 무엇인가?
@@ -28,3 +28,114 @@
 ###### 선택에 따라 A업체의 서비스를 받을수도 있고, B업체의 서비스도 받을 수 있다.   
 ###### 이경우 visitor pattern에서는 아래와 같이 클래스를 디자인 할수 있다  
 ###### [출처] 방문자 패턴(Visitor Pattern) - 자바 디자인 패턴과 JDK예제|작성자 IDEO  
+
+
+
+# 구조화 데이터의 취급 Visitor 패턴
+## JAVA(Visitor 패턴) 경우
+#### 개체지향 언어에서 구조를 갖는 데이터를 추적하는 처리를 허려면 디자인 패턴에서 말하는 Vistor Patten을 자주 사용하게 된다.
+#### 실제로 XMLSAX 라이브러리나 파서 생성기(parser generator) 등에서는 Visitor 패턴의 인터페이스를 생성하여 프로그램머에게 제공한다.
+#### 여기서는 숫자의 덧셈과 제곱만을 갖는 식의 구문 트리를 검색하여 수식을 평가하거나 수식을 그래도 문자열로 하거나 하는 작업을 생각해 보자.
+#### 수식은 다음과 같은 BNF로 표현한다고 치자.
+
+### 식 :: 식 '+' '(' 식 ')' ^2 | 숫자
+
+![classdialgram](https://user-images.githubusercontent.com/12265888/45093133-74cfa500-b152-11e8-870c-d33d2faefc87.png)
+
+## JAVA Source
+interface Visitor<N, R> {
+    //덧셀 식을 위한 메소드
+    R plus(Expr<N> e1, Expr<N> e2);
+    // 제곱 식을 우ㅏ한 메소드
+    R square(Expr<N> e);
+    // 숫자를 위한 메소드
+    R number(N e);
+}
+
+// 식의 인터페이스
+interface Expr<N> {
+    <R> R accept(Visitor<N, R> v);
+}
+
+// 덧셈 식
+class Plus<N> implements Expr<N> {
+    Expr<N> e1;
+    Expr<N> e2;
+
+    Plus(Expr<N> e1, Expr<N> e2) {
+        this.e1 = e1;
+        this.e2 = e2;
+    }
+
+    public <R> R accept(Visitor<N, R> v) {
+        return v.plus(e1, e2);
+    }
+}
+
+// 제곱 식
+class Square<N> implements Expr<N> {
+    Expr<N> e1;
+
+    Square(Expr<N> e1) {
+        this.e1 = e1;
+    }
+
+    public <R> R accept(Visitor<N, R> v) {
+        return v.square(e1);
+    }
+}
+
+// 숫자 식
+class Number<N> implements Expr<N> {
+    N n;
+
+    Number(N n) {
+        this.n = n;
+    }
+
+    public <R> R accept(Visitor<N, R> v) {
+        return v.number(n);
+    }
+}
+
+// 식의 평가를 실시하는 Visitor
+class Eval implements Visitor<Integer, Integer> {
+
+    public Integer plus(Expr<Integer> e1, Expr<Integer> e2) {
+        return e1.accept(this) + e2.accept(this);
+    }
+
+    public Integer square(Expr<Integer> e) {
+        Integer x = e.accept(this);
+        return x * x;
+    }
+
+    public Integer number(Integer n) {
+        return n;
+    }
+}
+
+class Show implements Visitor<Integer, String> {
+    public String plus(Expr<Integer> e1, Expr<Integer> e2) {  
+        return e1.accept(this) + " + " + e2.accept(this);  
+    }
+
+    public String square(Expr<Integer> e) {
+        return "(" + e.accept(this) + ")^2" ;
+    }
+
+    public String number(Integer n) {
+        return n + "";
+    }
+}
+
+public class TestVisitor {  
+    public static void main(String[] args) {  
+        // e - 1 +(2 + 3)^2  
+        Expr e = new Plus(new Number(1),  
+                          new Square(new Plus(new Number(2), new Number(3))));  
+
+        System.out.println(e.accept(new Show()));  
+        System.out.println(e.accept(new Eval()));  
+    }  
+} 
